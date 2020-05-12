@@ -15,74 +15,68 @@
      estimate fast enough.
  */
 
-
-
 //for now we'll just write the results to stdout 
 void trackPitch(double time){
   /* first, lets set up rtaudio for getting our input stream */
-  unsigned int bufferFrames, device,offest = 0;
-  FILE *fd;
+  int count =0;
+  int channels = 1;
+  int sampleRate = 44000;
+  int buffSize = 256;
+  int nBuffers = 4;
+  double* buffer;
+  int device = 0; //default
+  RtAudio *audio = 0;
 
-  RtAudio adc;
-  if(adc.getDeviceCount() <1){
-    std::cout << "\n no audio device found!\n";
-    return -1:
-  }
-  unsigend channels = 1;
-  unsigned int frameRate = 44000;
-  bufferFrames = 512;
-
-  RtAudio::StreamParameters iParams;
-  if(device == 0)
-    iParams.deviceId = adc.getDefaultInputDevice();
-  else
-    iParamds.deviceId = device;
-  iparams.nChannels = channels;
-  iParams.firstChannels = offset;
-
-  InputData data;
-  data.buffer = 0;
-  try{
-    adc.openStream(NULL, &iParams, FORMAT, frameRate, &bufferFrames, &input, (void *) &data);
-  }
-  catch (RtAudioError& e){
-    std::cout << '\n' << e.getMessage() << '\n' << std::endl;
-    return -1 
-  }
-
-  data.bufferBytes = bufferFrames * channels * sizeof(double);
-  data.totalFrames = (unsigned long) (frameRate*time);
-  data.frameCounter = 0;
-  data.channels = channels;
-  unsigned long totalBytes;
-  totalBytes = data.totalFrames * channels * sizeof(double);
-  
   try {
-    adc.startStream();
-    std::cout << "starting stream\n"; 
-  }
-  catch (RtAudioError& e) {
-    std::cout << '\n' << e.getMessage() << std::endl;
+    audio = new RtAudio(&stream, 0, 0, device, channels, RTAUDIO_FLOAT32, sampleRate,
+			&bufferSize, nBuffers);
+  }catch (RtError &error){
+    error.printMessage();
     return -1;
   }
-  std::cout << "RECORDING\n";
-  unsigned int buff_pos_1, buff_pos_2 = 0;
-  while (adc.isStreamRunning()){
+ 
+  try {
+    buffer = (double *) audio->getStreamBuffer();
+    audio->startStream();
+  }catch (RtError &error) {
+    error.printMessage();
+    return -1;
+  }
+
+  int buff_pos_2 = 0;
+  int buff_pos_1 = 0;
+  while (count < 4000 /*audio->isStreamRunning()*/){
     /* analyze every 100ms of frames using MPM */
     /* possible approach: continuosly divide the buffer into chunks of data, and analyze each chunk
        e.g. [0....cur_buffer_position] | -> chunk -> MPM(chunk) [old_buffer_position .... cur_buffer_position] -> chunk -> MPM(Chunk)
        */
-    buff_pos_2 = std::size(data.buffer);
+    try{
+      audio->tickStream();
+    }catch(RtError &error){
+      error.printMessage();
+      return -1;
+    }
+    buff_pos_2 += bufferSize;
     vector<double> temp_buffer(data.buffer+buff_pos_1,data.buff+buff_pos_2)
-    buff_pos_1 = buff_pos_2+1;
+    buff_pos_1 = buff_pos_2;
     double estimation = mpm(temp_buffer, frameRate);
     std::cout << '\n' << estimatation << std::endl;
-    SLEEP(100);
+    count+=bufferSize;
   }
+  try{
+    audio->stopStream();
+  }catch(RtError &e){
+    e.printMessage();
+  }
+  delete audio;
 }
 
 int main(){
   //...cli here...
-
+  double time=0;
+  std::cout << "Track time: ";
+  std:: cin >> time;
+  std::cout << "\nRunning tracker ";
+  trackPitch(time);
   return 0;
 }
