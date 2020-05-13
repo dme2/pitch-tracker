@@ -1,5 +1,5 @@
 #include <algorithm>
-#include "pitchtracker.h"
+#include "pitchtracker.hpp"
 #include <iterator>
 #include <iostream>
 #include "RtAudio.h"

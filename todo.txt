@@ -1,7 +1,7 @@
 write audio streamer (look into rtaudio, convert into data streaming recorder 
-	(somes sort of buffer control? ) []
+	(somes sort of buffer control? ) [x]
 write pitchtracker.hpp [x]
-write pitchtracker.cpp [] (in progress)
+write pitchtracker.cpp [x] (in progress)
 write tests (recorder/streamer, mpm tests, pitchtracker test) []
 Fix Makefile []
 
