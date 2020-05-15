@@ -25,41 +25,59 @@ void trackPitch(double time){
   int nBuffers = 4;
   double* buffer;
   int device = 0; //default
-  RtAudio *audio = 0;
+
+  RtAudio audio;
+  RtAudio::StreamParameters iParams;
+
+  if(device==0)
+    iParams.deviceId = adc.getDefaultInputDevice();
+  else:
+    iParams.deviceId = device;
+  iParams.nChannels = channels;
+  iParams.firstChannel = offset; //??
+
+  InputData data;
+  data.buffer = 0;
 
   try {
-    audio = new RtAudio(&stream, 0, 0, device, channels, RTAUDIO_FLOAT32, sampleRate,
-			&bufferSize, nBuffers);
-  }catch (RtError &error){
-    error.printMessage();
-    return -1;
+    audio.openStream(NULL, &iParams, FORMAT, sampleRate, buffSize, &input, (void *)&data);
   }
- 
-  try {
-    buffer = (double *) audio->getStreamBuffer();
-    audio->startStream();
-  }catch (RtError &error) {
-    error.printMessage();
-    return -1;
+  catch (RtAudioError& e) {
+      std:: cout << '\n' << e.getMessage() << '\n' << std::endl;
+      return;
+  }
+  
+  data.bufferBytes = buffSize * channels * sizeof (double);
+  data.totalFrames = (unsigned long) (sampleRate * time);
+  data.frameCounter = 0;
+  data.channels = channels;
+  unsigned long totalBytes;
+  totalBytes = data.totalFrames * channels * sizeof (double);
+  
+  //malloc the buffer - probably need to figure something else out for streaming purposes
+  data.buffer = (double*) malloc(totalBytes);
+  if(data.buffer == 0){
+    cout << "ALLOC ERROR\n";
+    return;
+  }
+
+  try{
+    audio.startStream();
+  } catch(RtAudioError& e){
+    std:: cout << '\n' << e.getMessage() << '\n';
+    return;
   }
 
   int buff_pos_2 = 0;
   int buff_pos_1 = 0;
 
-  //count is temporary for now. need to figure out a way to determine how many bytes we
-  //actually need to record, as well as clearing the buffer after we get the data we need
-  //Also: look into window overlapping (might be necessary)
-  while (count < 4000 /*audio->isStreamRunning()*/){
+  //look into window overlapping (might be necessary)
+  while (audio.isStreamRunning()){
     /* analyze every 100ms of frames using MPM */
     /* possible approach: continuosly divide the buffer into chunks of data, and analyze each chunk
        e.g. [0....cur_buffer_position] | -> chunk -> MPM(chunk) [old_buffer_position .... cur_buffer_position] -> chunk -> MPM(Chunk)
        */
-    try{
-      audio->tickStream();
-    }catch(RtError &error){
-      error.printMessage();
-      return -1;
-    }
+    SLEEP(100);
     buff_pos_2 += bufferSize;
     vector<double> temp_buffer(data.buffer+buff_pos_1,data.buff+buff_pos_2)
     buff_pos_1 = buff_pos_2;
