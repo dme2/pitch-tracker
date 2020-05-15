@@ -20,8 +20,8 @@ void trackPitch(double time){
   /* first, lets set up rtaudio for getting our input stream */
   int count =0;
   int channels = 1;
-  int sampleRate = 44000;
-  int buffSize = 256;
+  int sampleRate = 44100;
+  int buffSize = 512; //recommended window size for MPM
   int nBuffers = 4;
   double* buffer;
   int device = 0; //default
@@ -45,6 +45,10 @@ void trackPitch(double time){
 
   int buff_pos_2 = 0;
   int buff_pos_1 = 0;
+
+  //count is temporary for now. need to figure out a way to determine how many bytes we
+  //actually need to record, as well as clearing the buffer after we get the data we need
+  //Also: look into window overlapping (might be necessary)
   while (count < 4000 /*audio->isStreamRunning()*/){
     /* analyze every 100ms of frames using MPM */
     /* possible approach: continuosly divide the buffer into chunks of data, and analyze each chunk
