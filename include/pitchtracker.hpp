@@ -110,7 +110,7 @@ std::pair<T,T> parabolic_interp(const std::vector<T> &array, int x_){
 }
   
 template <typename T>
-T mpm(std::vector<double> audio_buff, int sample_rate){
+T mpm(std::vector<T>& audio_buff, int sample_rate){
   std::vector<T> out_real = autocor(audio_buff);
   std::vector<std::pair<T,T>> estimates;
   std::vector<int> max_positions = pick_peaks(out_real);

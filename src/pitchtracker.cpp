@@ -22,10 +22,10 @@
 void trackPitch(double time){
   /* first, lets set up rtaudio for getting our input stream */
   unsigned int channels = 1;
-  unsigned int sampleRate = 44100;
+  int sampleRate = 44100;
   unsigned int buffSize = 512; //recommended window size for MPM
-  unsigned int nBuffers = 4;
-  double* buffer;
+  //unsigned int nBuffers = 4;
+  //double* buffer;
   unsigned int device = 0; //default
   unsigned int offset = 0;
     
@@ -44,7 +44,7 @@ void trackPitch(double time){
   data.buffer = 0;
 
   try {
-    audio.openStream(NULL, &iParams, FORMAT, sampleRate, buffSize, &input, (void *)&data);
+    audio.openStream(NULL, &iParams, FORMAT, sampleRate, &buffSize, &input, (void *)&data);
   }
   catch (RtAudioError& e) {
       std:: cout << '\n' << e.getMessage() << '\n' << std::endl;
@@ -82,19 +82,20 @@ void trackPitch(double time){
        e.g. [0....cur_buffer_position] | -> chunk -> MPM(chunk) [old_buffer_position .... cur_buffer_position] -> chunk -> MPM(Chunk)
        */
     SLEEP(100);
-    buff_pos_2 += bufferSize;
-    std::vector<double> temp_buffer(data.buffer+buff_pos_1,data.buff+buff_pos_2)
+    buff_pos_2 += buffSize;
+    std::vector<double> temp_buffer(data.buffer+buff_pos_1,data.buffer+buff_pos_2);
     buff_pos_1 = buff_pos_2;
-    double estimation = mpm(temp_buffer, frameRate);
+    double estimation = mpm(temp_buffer, sampleRate);
     std::cout << '\n' << estimation << std::endl;
   }
 
   try{
     audio.stopStream();
-  }catch(RtError &e){
+  }catch(RtAudioError &e){
     e.printMessage();
   }
-  delete audio;
+  if(data.buffer)
+    free(data.buffer);
 }
 
 int main(){
