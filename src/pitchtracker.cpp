@@ -1,4 +1,5 @@
 #include <algorithm>
+#include "audio_stream.hpp"
 #include "pitchtracker.hpp"
 #include <iterator>
 #include <iostream>
@@ -15,24 +16,27 @@
      estimate fast enough.
  */
 
+#define FORMAT RTAUDIO_SINT16
+
 //for now we'll just write the results to stdout 
 void trackPitch(double time){
   /* first, lets set up rtaudio for getting our input stream */
-  int count =0;
-  int channels = 1;
-  int sampleRate = 44100;
-  int buffSize = 512; //recommended window size for MPM
-  int nBuffers = 4;
+  unsigned int channels = 1;
+  unsigned int sampleRate = 44100;
+  unsigned int buffSize = 512; //recommended window size for MPM
+  unsigned int nBuffers = 4;
   double* buffer;
-  int device = 0; //default
-
+  unsigned int device = 0; //default
+  unsigned int offset = 0;
+    
   RtAudio audio;
   RtAudio::StreamParameters iParams;
 
   if(device==0)
-    iParams.deviceId = adc.getDefaultInputDevice();
-  else:
+    iParams.deviceId = audio.getDefaultInputDevice();
+  else
     iParams.deviceId = device;
+
   iParams.nChannels = channels;
   iParams.firstChannel = offset; //??
 
@@ -57,7 +61,7 @@ void trackPitch(double time){
   //malloc the buffer - probably need to figure something else out for streaming purposes
   data.buffer = (double*) malloc(totalBytes);
   if(data.buffer == 0){
-    cout << "ALLOC ERROR\n";
+    std::cout << "ALLOC ERROR\n";
     return;
   }
 
@@ -79,14 +83,14 @@ void trackPitch(double time){
        */
     SLEEP(100);
     buff_pos_2 += bufferSize;
-    vector<double> temp_buffer(data.buffer+buff_pos_1,data.buff+buff_pos_2)
+    std::vector<double> temp_buffer(data.buffer+buff_pos_1,data.buff+buff_pos_2)
     buff_pos_1 = buff_pos_2;
     double estimation = mpm(temp_buffer, frameRate);
-    std::cout << '\n' << estimatation << std::endl;
-    count+=bufferSize;
+    std::cout << '\n' << estimation << std::endl;
   }
+
   try{
-    audio->stopStream();
+    audio.stopStream();
   }catch(RtError &e){
     e.printMessage();
   }

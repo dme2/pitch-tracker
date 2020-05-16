@@ -9,8 +9,7 @@ debug: pitch-tracker
 
 pitch-tracker:
 	$(CXX) $(CXX_FLAGS) -o  $@ \
-		src/pitchtracker.cpp \
-		src/audio_stream.cpp 
+		src/pitchtracker.cpp 
 
 clean:
 	-rm pitch-tracker

@@ -30,7 +30,7 @@ std::vector<T> autocor(std::vector<T> &audio_buff){
   ffts_plan_t *fft_forward;
   ffts_plan_t *fft_backward;
 
-  fft_forward =  ffts_init_ld(N*2, FFTS_FORWARD);
+  fft_forward =  ffts_init_1d(N*2, FFTS_FORWARD);
   fft_backward = ffts_init_1d(N*2, FFTS_BACKWARD);
 
   std::vector<T> out_real(N);
@@ -74,7 +74,8 @@ std::vector<int> pick_peaks(const std::vector<T> &nsdf){
     pos=1;
 
   while (pos < size-1){
-    if (nsdf[pos] >nsdf[pos-1] && nsdf[pos] >= nsdf[pos+1]) && (cur_max_pos == 0 || nsdf[pos] > nsdf[cur_max_pos]))
+    if ((nsdf[pos] >nsdf[pos-1] && nsdf[pos] >= nsdf[pos+1]) 
+	&& (cur_max_pos == 0 || nsdf[pos] > nsdf[cur_max_pos]))
       cur_max_pos=pos;
     pos++;
     if(pos <size -1 && nsdf[pos]<=0){
@@ -109,7 +110,7 @@ std::pair<T,T> parabolic_interp(const std::vector<T> &array, int x_){
 }
   
 template <typename T>
-T mpm(const std::vector<double> audio_buff, int sample_rate){
+T mpm(std::vector<double> audio_buff, int sample_rate){
   std::vector<T> out_real = autocor(audio_buff);
   std::vector<std::pair<T,T>> estimates;
   std::vector<int> max_positions = pick_peaks(out_real);
@@ -143,6 +144,6 @@ T mpm(const std::vector<double> audio_buff, int sample_rate){
   return (pitch_estimate > MPM_LOWER_PITCH_CUTOFF) ? pitch_estimate : -1; 
 }
 
-template double mpm(const std::vector<double> &audio_buffer, int sample_rate);
+//template double mpm<double>(const std::vector<double> &audio_buffer, int sample_rate);
 
-template float mpm(const std::vector<float> &audio_buffer, int sample_rate);
+//template float mpm<float>(const std::vector<float> &audio_buffer, int sample_rate);
