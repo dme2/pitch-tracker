@@ -144,6 +144,3 @@ T mpm(std::vector<T>& audio_buff, int sample_rate){
   return (pitch_estimate > MPM_LOWER_PITCH_CUTOFF) ? pitch_estimate : -1; 
 }
 
-//template double mpm<double>(const std::vector<double> &audio_buffer, int sample_rate);
-
-//template float mpm<float>(const std::vector<float> &audio_buffer, int sample_rate);
