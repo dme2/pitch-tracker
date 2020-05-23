@@ -1,1 +1,2 @@
 g++ buffer_test.cpp ../include/RtAudio.cpp -Wall -D__LINUX_ALSA__ -I ../include -o buffer_test  -lpthread -lasound
+g++ buffer_test.cpp ../include/RtAudio.cpp -Wall -D__LINUX_ALSA__ -I ../include -o buffer_test  -lpthread -lasound

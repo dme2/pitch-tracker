@@ -18,7 +18,7 @@
 #define FORMAT RTAUDIO_SINT16
 
 //for now we'll just write the results to stdout 
-void trackPitch(double time){
+void trackPitch(int total_bytes){
   /* first, lets set up rtaudio for getting our input stream */
   unsigned int channels = 1;
   int sampleRate = 44100;
@@ -56,7 +56,8 @@ void trackPitch(double time){
   }
   
   data.bufferBytes = buffSize * channels * sizeof (double);
-  data.totalFrames = (unsigned long) (sampleRate * time);
+  //figure out the total frame calculation w/o time
+  data.totalFrames = (unsigned long) (sampleRate * 2.0);
   data.frameCounter = 0;
   data.channels = channels;
   unsigned long totalBytes;
@@ -76,6 +77,7 @@ void trackPitch(double time){
     return;
   }
 
+  int accum_bytes = 0;
   double* buff_temp = data.buffer;
   //look into window overlapping (might be necessary)
   while (audio.isStreamRunning()){
@@ -85,8 +87,11 @@ void trackPitch(double time){
        */
     SLEEP(100);
     std::vector<double> temp_buffer(data.buffer,data.buffer+512);
-    std::cout << temp_buffer.size() << std::endl;
+    std::cout << "Single buffer size: " << temp_buffer.size() << std::endl;
     data.buffer = buff_temp;
+    accum_bytes += 512;
+    if (accum_bytes > total_bytes)
+      break;
   }
 
   try{
@@ -100,10 +105,10 @@ void trackPitch(double time){
 
 int main(){
   //...cli here...
-  double time=0;
-  std::cout << "Track time: ";
-  std:: cin >> time;
+  int t_bytes=0;
+  std::cout << "enter total_bytes: ";
+  std:: cin >> t_bytes;
   std::cout << "\nRunning recorder ";
-  trackPitch(time);
+  trackPitch(t_bytes);
   return 0;
 }
