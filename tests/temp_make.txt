@@ -1,2 +1,2 @@
 g++ buffer_test.cpp ../include/RtAudio.cpp -Wall -D__LINUX_ALSA__ -I ../include -o buffer_test  -lpthread -lasound
-g++ buffer_test.cpp ../include/RtAudio.cpp -Wall -D__LINUX_ALSA__ -I ../include -o buffer_test  -lpthread -lasound
+g++ mpm_test.cpp -ansi -pedantic -Werror -Wall -O2 -std=c++2a  -fext-numeric-literals -flto -lffts -I ../include -o mpm_test
