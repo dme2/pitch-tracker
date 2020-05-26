@@ -1,0 +1,1 @@
+g++ pitchtracker.cpp ../include/RtAudio.cpp -ansi -pedantic -Wall -O2 -std=c++2a  -fext-numeric-literals -flto -lffts -D __LINUX_ALSA__ -lpthread -lasound -I ../include -o mpm_test -L /usr/local/lib/libffts.a -t

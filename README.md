@@ -1,2 +1,2 @@
 # The Plan
-track/determine changes the changes in pitch from: e.g. a monophonic instrument being played into the microphone.
+track/determine the changes in pitch from a monophonic instrument being played into the microphone on the command line.

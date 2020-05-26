@@ -19,7 +19,7 @@
 #define FORMAT RTAUDIO_SINT16
 
 //for now we'll just write the results to stdout 
-void trackPitch(double time){
+void trackPitch(int total_bytes){
   /* first, lets set up rtaudio for getting our input stream */
   unsigned int channels = 1;
   int sampleRate = 44100;
@@ -50,7 +50,9 @@ void trackPitch(double time){
       std:: cout << '\n' << e.getMessage() << '\n' << std::endl;
       return;
   }
-  
+
+  //not sure if time is strictly needed here
+  double time = 2.0;
   data.bufferBytes = buffSize * channels * sizeof (double);
   data.totalFrames = (unsigned long) (sampleRate * time);
   data.frameCounter = 0;
@@ -72,9 +74,8 @@ void trackPitch(double time){
     return;
   }
 
-  int buff_pos_2 = 0;
-  int buff_pos_1 = 0;
-
+  int accum_bytes = 0;
+  double* buff_temp = data.buffer;
   //look into window overlapping (might be necessary)
   while (audio.isStreamRunning()){
     /* analyze every 100ms of frames using MPM */
@@ -82,11 +83,13 @@ void trackPitch(double time){
        e.g. [0....cur_buffer_position] | -> chunk -> MPM(chunk) [old_buffer_position .... cur_buffer_position] -> chunk -> MPM(Chunk)
        */
     SLEEP(100);
-    buff_pos_2 += buffSize;
-    std::vector<double> temp_buffer(data.buffer+buff_pos_1,data.buffer+buff_pos_2);
-    buff_pos_1 = buff_pos_2;
+    std::vector<double> temp_buffer(data.buffer,data.buffer+512);
     double estimation = mpm(temp_buffer, sampleRate);
+    data.buffer = buff_temp;
+    accum_bytes += 512;
     std::cout << '\n' << estimation << std::endl;
+    if(accum_bytes > total_bytes)
+      break;
   }
 
   try{
@@ -100,10 +103,10 @@ void trackPitch(double time){
 
 int main(){
   //...cli here...
-  double time=0;
-  std::cout << "Track time: ";
-  std:: cin >> time;
+  int t_bytes=0;
+  std::cout << "bytes to track: ";
+  std:: cin >> t_bytes;
   std::cout << "\nRunning tracker ";
-  trackPitch(time);
+  trackPitch(t_bytes);
   return 0;
 }
