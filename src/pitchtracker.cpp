@@ -2,7 +2,9 @@
 #include "audio_stream.hpp"
 #include "pitchtracker.hpp"
 #include <iterator>
+#include <fstream>
 #include <iostream>
+#include <string>
 #include "RtAudio.h"
 
 /* 
@@ -17,20 +19,33 @@
  */
 
 #define FORMAT RTAUDIO_SINT16
+typedef signed short s_type;
+
+template <typename T>
+void writeToFile(std::string f_path, const std::vector<T>& buffer_data){
+  std::ofstream f_out(f_path, std::ios::app);
+  std::copy(buffer_data.begin(), buffer_data.end(), std::ostream_iterator<T>(f_out, " "));
+  f_out.close();
+}
 
 //for now we'll just write the results to stdout 
 void trackPitch(int total_bytes){
   /* first, lets set up rtaudio for getting our input stream */
   unsigned int channels = 1;
-  int sampleRate = 44100;
-  unsigned int buffSize = 512; //recommended window size for MPM
+  int sampleRate = 48000;
+  unsigned int buffSize = 1024; 
   //unsigned int nBuffers = 4;
-  //double* buffer;
+  s_type*  buffer;
   unsigned int device = 0; //default
   unsigned int offset = 0;
     
   RtAudio audio;
   RtAudio::StreamParameters iParams;
+
+  if(audio.getDeviceCount() < 1){
+    std::cout << "no devices found!" << std::endl;
+    return;
+  }
 
   if(device==0)
     iParams.deviceId = audio.getDefaultInputDevice();
@@ -51,20 +66,21 @@ void trackPitch(int total_bytes){
       return;
   }
 
-  //not sure if time is strictly needed here
-  double time = 2.0;
-  data.bufferBytes = buffSize * channels * sizeof (double);
+  double time = 3.0;
+  data.bufferBytes = buffSize * channels * sizeof (s_type);
   data.totalFrames = (unsigned long) (sampleRate * time);
   data.frameCounter = 0;
   data.channels = channels;
   unsigned long totalBytes;
-  totalBytes = data.totalFrames * channels * sizeof (double);
+  totalBytes = data.totalFrames * channels * sizeof (s_type);
+  std::cout << "total frames: " << data.totalFrames << std::endl;
+  std::cout << "total bytes: " << totalBytes << std::endl;
   
   //malloc the buffer - probably need to figure something else out for streaming purposes
-  data.buffer = (double*) malloc(totalBytes);
+  data.buffer = (s_type*) malloc(totalBytes);
   if(data.buffer == 0){
     std::cout << "ALLOC ERROR\n";
-    return;
+    return; 
   }
 
   try{
@@ -73,9 +89,12 @@ void trackPitch(int total_bytes){
     std:: cout << '\n' << e.getMessage() << '\n';
     return;
   }
-
+  std::cout << "STARTING STREAM: " << std::endl;
   int accum_bytes = 0;
-  double* buff_temp = data.buffer;
+  s_type* buff_temp = data.buffer;
+  int buff_pos_1 = 0;
+  int buff_pos_2 = 1024;
+  
   //look into window overlapping (might be necessary)
   while (audio.isStreamRunning()){
     /* analyze every 100ms of frames using MPM */
@@ -83,17 +102,28 @@ void trackPitch(int total_bytes){
        e.g. [0....cur_buffer_position] | -> chunk -> MPM(chunk) [old_buffer_position .... cur_buffer_position] -> chunk -> MPM(Chunk)
        */
     SLEEP(100);
-    std::vector<double> temp_buffer(data.buffer,data.buffer+512);
+    /*std::vector<s_type> temp_buffer;
+    temp_buffer.insert(temp_buffer.end(), &data.buffer[buff_pos_1],&data.buffer[buff_pos_2]);
+
+    writeToFile("/home/dave/projects/pitch-tracker/src/rec.txt",temp_buffer);
+    std::cout << temp_buffer.size() << std::endl;
     double estimation = mpm(temp_buffer, sampleRate);
-    data.buffer = buff_temp;
-    accum_bytes += 512;
-    std::cout << '\n' << estimation << std::endl;
-    if(accum_bytes > total_bytes)
-      break;
+    buff_pos_1 += 1024;
+    buff_pos_2 += 1024;
+    //data.buffer = buff_temp;
+    //accum_bytes += 1024;
+    //std::cout << '\r' <<  "estimation: " << estimation << std::flush;
+    std::cout << "estimation: " << estimation << std::endl;
+    //if(accum_bytes > total_bytes)
+    // break;
+    */
   }
 
+  FILE* fd = fopen("rec.raw","wb");
+  fwrite(data.buffer, sizeof(s_type), data.totalFrames * channels, fd);
+
   try{
-    audio.stopStream();
+    audio.closeStream();
   }catch(RtAudioError &e){
     e.printMessage();
   }
@@ -106,7 +136,6 @@ int main(){
   int t_bytes=0;
   std::cout << "bytes to track: ";
   std:: cin >> t_bytes;
-  std::cout << "\nRunning tracker ";
   trackPitch(t_bytes);
   return 0;
 }

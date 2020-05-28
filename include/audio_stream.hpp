@@ -9,7 +9,7 @@
 
 //input data buffer and information
 struct InputData {
-  double* buffer;
+  signed short* buffer;
   unsigned long bufferBytes;
   unsigned long totalFrames;
   unsigned long frameCounter;
@@ -17,22 +17,22 @@ struct InputData {
 };
 
 /**** callback ****/
+int input( void * /*outputBuffer*/, void *inputBuffer, unsigned int nBufferFrames,
+           double /*streamTime*/, RtAudioStreamStatus /*status*/, void *data )
+{
+  InputData *iData = (InputData *) data;
 
-int input(void * /*outputBuffer */, void *inputBuffer, unsigned int nBufferFrames,
-          double /* streamTime */, RtAudioStreamStatus /*status*/, void *data){
-  InputData *iData = (InputData*) data;
-  //copies data to the allocated buffer
-  
+  // Simply copy the data to our allocated buffer.
   unsigned int frames = nBufferFrames;
-  if(iData -> frameCounter + nBufferFrames > iData->totalFrames){
-    frames = iData->totalFrames - iData -> frameCounter;
-    iData->bufferBytes = frames * iData->channels *sizeof(double);
+  if ( iData->frameCounter + nBufferFrames > iData->totalFrames ) {
+    frames = iData->totalFrames - iData->frameCounter;
+    iData->bufferBytes = frames * iData->channels * sizeof( signed short );
   }
 
   unsigned long offset = iData->frameCounter * iData->channels;
-  memcpy(iData->buffer+offset, inputBuffer, iData->bufferBytes);
+  memcpy( iData->buffer+offset, inputBuffer, iData->bufferBytes );
   iData->frameCounter += frames;
 
-  if(iData->frameCounter >= iData-> totalFrames) return -1;
+  if ( iData->frameCounter >= iData->totalFrames ) return 2;
   return 0;
 }

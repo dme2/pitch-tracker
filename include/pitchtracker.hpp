@@ -104,7 +104,7 @@ std::pair<T,T> parabolic_interp(const std::vector<T> &array, int x_){
   }else {
     T den = array[x+1] + array[x-1] - 2 * array[x];
     T delta = array[x-1] - array[x+1];
-    return (!den) ? std::make_pair(x, array[x]) : std::make_pair(x+delta / (2*den), array[x]-delta * delta / (8*den));
+    return (!den) ? std::make_pair(x, array[x]) : std::make_pair( (T)(x+delta / (2*den)), (T) (array[x]-delta * delta / (8*den)));
   }
   return std::make_pair(x_adjusted,array[x_adjusted]);
 }
