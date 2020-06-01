@@ -7,17 +7,6 @@
 #include <string>
 #include "RtAudio.h"
 
-/* 
-   main file for this project
-   functions:
-     int main
-     start_record [starts an rtaudio stream for n seconds (in the futures, maybe listen for keypresses instead]
-
-     we need to acess the stream every 300 milliseconds (just guessing here) and run
-     mpm on it, outputting the results continously. hopefully mpm can return the 
-     estimate fast enough.
- */
-
 #define FORMAT RTAUDIO_SINT16
 typedef signed short s_type;
 
@@ -28,19 +17,49 @@ void writeToFile(std::string f_path, const std::vector<T>& buffer_data){
   f_out.close();
 }
 
+/* Callback (audio processing/mpm here) */
+int input( void * /* out_buff */, void *inputBuffer, unsigned int nBufferFrames,
+           double /*streamTime*/, RtAudioStreamStatus /*status*/, void *data )
+{
+  InputData *iData = (InputData *) data;
+  // Simply copy the data to our allocated buffer.
+  unsigned int frames = nBufferFrames;
+  unsigned int *bytes = (unsigned int *) data;
+  if ( iData->frameCounter + nBufferFrames > iData->totalFrames ) {
+    frames = iData->totalFrames - iData->frameCounter;
+    iData->bufferBytes = frames * iData->channels * sizeof( signed short );
+  }
+
+  //instead of doing a memset to the data buffer,
+  //send the data to a vector<s_type> and then call MPM on it 
+  unsigned long offset = iData->frameCounter * iData->channels;
+  std::vector<double> temp_buffer;
+  memcpy( iData->buffer, inputBuffer, iData->bufferBytes );
+  unsigned size = sizeof(iData->buffer) / sizeof(s_type);
+  //std::cout << size << std::endl;
+  temp_buffer.insert(temp_buffer.end(), &iData->buffer[0], &iData->buffer[940]);
+  double estimate = mpm(temp_buffer, 44100);
+  //writeToFile("/home/dave/projects/pitch-tracker/src/rec.txt", temp_buffer);
+  std::cout <<  "\nestimation: " << estimate;
+  //iData->frameCounter += frames;
+  if ( iData->frameCounter >= iData->totalFrames ) return 2;
+  return 0;
+}
+
+
 //for now we'll just write the results to stdout 
 void trackPitch(int total_bytes){
   /* first, lets set up rtaudio for getting our input stream */
   unsigned int channels = 1;
-  int sampleRate = 48000;
-  unsigned int buffSize = 1024; 
+  int sampleRate = 44100;
+  unsigned int buffSize = 940; 
   //unsigned int nBuffers = 4;
   s_type*  buffer;
   unsigned int device = 0; //default
   unsigned int offset = 0;
     
   RtAudio audio;
-  RtAudio::StreamParameters iParams;
+  RtAudio::StreamParameters iParams; 
 
   if(audio.getDeviceCount() < 1){
     std::cout << "no devices found!" << std::endl;
@@ -55,6 +74,7 @@ void trackPitch(int total_bytes){
   iParams.nChannels = channels;
   iParams.firstChannel = offset; //??
 
+  
   InputData data;
   data.buffer = 0;
 
@@ -66,7 +86,7 @@ void trackPitch(int total_bytes){
       return;
   }
 
-  double time = 3.0;
+  double time = 6.0;
   data.bufferBytes = buffSize * channels * sizeof (s_type);
   data.totalFrames = (unsigned long) (sampleRate * time);
   data.frameCounter = 0;
@@ -90,10 +110,6 @@ void trackPitch(int total_bytes){
     return;
   }
   std::cout << "STARTING STREAM: " << std::endl;
-  int accum_bytes = 0;
-  s_type* buff_temp = data.buffer;
-  int buff_pos_1 = 0;
-  int buff_pos_2 = 1024;
   
   //look into window overlapping (might be necessary)
   while (audio.isStreamRunning()){
@@ -118,10 +134,7 @@ void trackPitch(int total_bytes){
     // break;
     */
   }
-
-  FILE* fd = fopen("rec.raw","wb");
-  fwrite(data.buffer, sizeof(s_type), data.totalFrames * channels, fd);
-
+  
   try{
     audio.closeStream();
   }catch(RtAudioError &e){

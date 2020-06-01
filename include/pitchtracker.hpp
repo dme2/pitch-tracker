@@ -19,8 +19,9 @@
 #include <numeric>
 #include <stdexcept>
 #include <vector>
+#include <climits>
 
-#define MPM_CUTOFF 0.93
+#define MPM_CUTOFF 0.3
 #define MPM_SMALL_CUTOFF 0.5
 #define MPM_LOWER_PITCH_CUTOFF 80.0
 
@@ -44,8 +45,11 @@ std::vector<T> autocor(std::vector<T> &audio_buff){
                  });
 
   ffts_execute(fft_forward, out_im.data(), out_im.data());
+  float x = (float) N*2;
+  if (x == 0)
+    throw std::invalid_argument("div by zero");
 
-  std::complex<float> scale = { 1.0f / (float)(N*2), static_cast<T>(0.0)};
+  std::complex<float> scale = { 1.0f / x, static_cast<T>(0.0)};
 
   for(int i =0; i < N; ++i){
     out_im[i] *= std::conj(out_im[i]) * scale;

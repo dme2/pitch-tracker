@@ -15,24 +15,3 @@ struct InputData {
   unsigned long frameCounter;
   unsigned int  channels;
 };
-
-/**** callback ****/
-int input( void * /*outputBuffer*/, void *inputBuffer, unsigned int nBufferFrames,
-           double /*streamTime*/, RtAudioStreamStatus /*status*/, void *data )
-{
-  InputData *iData = (InputData *) data;
-
-  // Simply copy the data to our allocated buffer.
-  unsigned int frames = nBufferFrames;
-  if ( iData->frameCounter + nBufferFrames > iData->totalFrames ) {
-    frames = iData->totalFrames - iData->frameCounter;
-    iData->bufferBytes = frames * iData->channels * sizeof( signed short );
-  }
-
-  unsigned long offset = iData->frameCounter * iData->channels;
-  memcpy( iData->buffer+offset, inputBuffer, iData->bufferBytes );
-  iData->frameCounter += frames;
-
-  if ( iData->frameCounter >= iData->totalFrames ) return 2;
-  return 0;
-}
