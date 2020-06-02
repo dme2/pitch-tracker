@@ -30,13 +30,11 @@ int input( void * /* out_buff */, void *inputBuffer, unsigned int nBufferFrames,
     iData->bufferBytes = frames * iData->channels * sizeof( signed short );
   }
 
-  //instead of doing a memset to the data buffer,
-  //send the data to a vector<s_type> and then call MPM on it 
+  //send the data to a vector<double> and then call MPM on it 
   unsigned long offset = iData->frameCounter * iData->channels;
   std::vector<double> temp_buffer;
   memcpy( iData->buffer, inputBuffer, iData->bufferBytes );
   unsigned size = sizeof(iData->buffer) / sizeof(s_type);
-  //std::cout << size << std::endl;
   temp_buffer.insert(temp_buffer.end(), &iData->buffer[0], &iData->buffer[940]);
   double estimate = mpm(temp_buffer, 44100);
   //writeToFile("/home/dave/projects/pitch-tracker/src/rec.txt", temp_buffer);
@@ -46,10 +44,9 @@ int input( void * /* out_buff */, void *inputBuffer, unsigned int nBufferFrames,
   return 0;
 }
 
-
 //for now we'll just write the results to stdout 
-void trackPitch(int total_bytes){
-  /* first, lets set up rtaudio for getting our input stream */
+void trackPitch(/*int total_bytes*/){
+  //rtaudio setup
   unsigned int channels = 1;
   int sampleRate = 44100;
   unsigned int buffSize = 940; 
@@ -72,8 +69,7 @@ void trackPitch(int total_bytes){
     iParams.deviceId = device;
 
   iParams.nChannels = channels;
-  iParams.firstChannel = offset; //??
-
+  iParams.firstChannel = offset; 
   
   InputData data;
   data.buffer = 0;
@@ -86,7 +82,7 @@ void trackPitch(int total_bytes){
       return;
   }
 
-  double time = 6.0;
+  double time = 2.0; //effectively just the buffer width
   data.bufferBytes = buffSize * channels * sizeof (s_type);
   data.totalFrames = (unsigned long) (sampleRate * time);
   data.frameCounter = 0;
@@ -96,7 +92,7 @@ void trackPitch(int total_bytes){
   std::cout << "total frames: " << data.totalFrames << std::endl;
   std::cout << "total bytes: " << totalBytes << std::endl;
   
-  //malloc the buffer - probably need to figure something else out for streaming purposes
+  //malloc the buffer 
   data.buffer = (s_type*) malloc(totalBytes);
   if(data.buffer == 0){
     std::cout << "ALLOC ERROR\n";
@@ -118,21 +114,6 @@ void trackPitch(int total_bytes){
        e.g. [0....cur_buffer_position] | -> chunk -> MPM(chunk) [old_buffer_position .... cur_buffer_position] -> chunk -> MPM(Chunk)
        */
     SLEEP(100);
-    /*std::vector<s_type> temp_buffer;
-    temp_buffer.insert(temp_buffer.end(), &data.buffer[buff_pos_1],&data.buffer[buff_pos_2]);
-
-    writeToFile("/home/dave/projects/pitch-tracker/src/rec.txt",temp_buffer);
-    std::cout << temp_buffer.size() << std::endl;
-    double estimation = mpm(temp_buffer, sampleRate);
-    buff_pos_1 += 1024;
-    buff_pos_2 += 1024;
-    //data.buffer = buff_temp;
-    //accum_bytes += 1024;
-    //std::cout << '\r' <<  "estimation: " << estimation << std::flush;
-    std::cout << "estimation: " << estimation << std::endl;
-    //if(accum_bytes > total_bytes)
-    // break;
-    */
   }
   
   try{
@@ -146,9 +127,7 @@ void trackPitch(int total_bytes){
 
 int main(){
   //...cli here...
-  int t_bytes=0;
-  std::cout << "bytes to track: ";
-  std:: cin >> t_bytes;
-  trackPitch(t_bytes);
+  std::cout << "running tracker...";
+  trackPitch();
   return 0;
 }
