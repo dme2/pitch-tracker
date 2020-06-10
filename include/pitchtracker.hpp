@@ -78,7 +78,7 @@ std::vector<int> pick_peaks(const std::vector<T> &nsdf){
     pos=1;
 
   while (pos < size-1){
-    if ((nsdf[pos] >nsdf[pos-1] && nsdf[pos] >= nsdf[pos+1]) 
+    if ((nsdf[pos] > nsdf[pos-1] && nsdf[pos] >= nsdf[pos+1]) 
 	&& (cur_max_pos == 0 || nsdf[pos] > nsdf[cur_max_pos]))
       cur_max_pos=pos;
     pos++;
@@ -87,7 +87,7 @@ std::vector<int> pick_peaks(const std::vector<T> &nsdf){
         max_pos.push_back(cur_max_pos);
         cur_max_pos=0;
       }
-      while (pos<size-1 && nsdf[pos] <= 0.0)
+      while (pos < size-1 && nsdf[pos] <= 0.0)
         pos++;
     }
   }
@@ -101,7 +101,7 @@ std::pair<T,T> parabolic_interp(const std::vector<T> &array, int x_){
   int x_adjusted;
   T   x = (T)x_;
 
-  if(x <1){
+  if(x < 1){
     x_adjusted = (array[x] <= array[x+1]) ? x : x + 1;
   }else if (x > signed(array.size()-1)) {
     x_adjusted = (array[x] <= array[x-1]) ? x : x - 1;
