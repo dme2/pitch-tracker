@@ -11,3 +11,6 @@ todo:
 	[] fix makefile (or replace with something else)
 	[] fix outstream
 	[] program args? (sample rate, pitch out/frequency out)
+
+great resource/implementation for the Mcleod Pitch Method and other pitch-detecting algorithms:
+https://github.com/sevagh/pitch-detection
