@@ -38,7 +38,7 @@ int input( void * /* out_buff */, void *inputBuffer, unsigned int nBufferFrames,
   temp_buffer.insert(temp_buffer.end(), &iData->buffer[0], &iData->buffer[940]);
   double estimate = mpm(temp_buffer, 44100);
   //writeToFile("/home/dave/projects/pitch-tracker/src/rec.txt", temp_buffer);
-  std::cout <<  "\nestimation: " << estimate;
+  std::cout <<  "\nestimation: " << estimate << "\r" << std::flush;
   //iData->frameCounter += frames;
   if ( iData->frameCounter >= iData->totalFrames ) return 2;
   return 0;

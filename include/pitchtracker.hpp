@@ -124,7 +124,7 @@ T mpm(std::vector<T>& audio_buff, int sample_rate){
   for (int i : max_positions){
     highest_amplitude = std::max(highest_amplitude, out_real[i]);
     if(out_real[i]>MPM_SMALL_CUTOFF) {
-      auto x =parabolic_interp(out_real,i);
+      auto x = parabolic_interp(out_real,i);
       estimates.push_back(x);
       highest_amplitude = std::max(highest_amplitude,std::get<1>(x));
     }
@@ -133,11 +133,11 @@ T mpm(std::vector<T>& audio_buff, int sample_rate){
   if(estimates.empty())
     return -1;
 
-  T actual_cutof = MPM_CUTOFF * highest_amplitude;
+  T actual_cutoff = MPM_CUTOFF * highest_amplitude;
   T period = 0;
 
   for (auto i : estimates) {
-    if(std::get<1>(i) >= actual_cutof) {
+    if(std::get<1>(i) >= actual_cutoff) {
       period = std::get<0>(i);
       break;
     }
